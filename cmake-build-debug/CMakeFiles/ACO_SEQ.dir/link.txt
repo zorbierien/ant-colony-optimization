@@ -1,1 +1,1 @@
-/usr/bin/cc -g CMakeFiles/ACO_SEQ.dir/main.c.o CMakeFiles/ACO_SEQ.dir/aco.c.o -o ACO_SEQ 
+/usr/bin/cc -g CMakeFiles/ACO_SEQ.dir/main.c.o CMakeFiles/ACO_SEQ.dir/aco.c.o -o ACO_SEQ  -lm 

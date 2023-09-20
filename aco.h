@@ -6,20 +6,18 @@
 #define ACO_SEQ_ACO_H
 
 typedef struct {
-    int *tabuList;
-} ant;
+    float cost;
+    double pheromone;
+} graphEntry;
 
 typedef struct {
-  int numNodes;
-  int *adjList
-} graph;
+    int id;
+    float x;
+    float y;
+} nodeCoords;
 
-typedef struct {
-    graph *antGraph;
-    int cycle;
-} colony;
-
-colony* init_colony();
-void read_graph_from_file(char* filePath, colony *antColony);
+void buildGraph(char * filePath);
+char** readGraphFile(char *filePath, int *bufferSize);
+graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength);
 
 #endif //ACO_SEQ_ACO_H

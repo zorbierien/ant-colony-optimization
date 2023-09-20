@@ -2,7 +2,6 @@
 #include "aco.h"
 
 int main() {
-    colony *antColony = init_colony();
-    read_graph_from_file("a280.tsp", antColony);
+    buildGraph("../a280.tsp");
     return 0;
 }

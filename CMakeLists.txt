@@ -6,3 +6,4 @@ set(CMAKE_C_STANDARD 23)
 add_executable(ACO_SEQ main.c
         aco.c
         aco.h)
+target_link_libraries(ACO_SEQ m)
