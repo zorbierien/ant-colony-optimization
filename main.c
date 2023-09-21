@@ -2,6 +2,8 @@
 #include "aco.h"
 
 int main() {
-    buildGraph("../a280.tsp");
+    int *path = NULL;
+    int length = 0;
+    length = antColonyOptimize("../a280.tsp", path, 1, 280);
     return 0;
 }

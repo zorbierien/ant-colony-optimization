@@ -4,20 +4,18 @@
 
 #ifndef ACO_SEQ_ACO_H
 #define ACO_SEQ_ACO_H
+#include "graph.h"
 
 typedef struct {
-    float cost;
-    double pheromone;
-} graphEntry;
+    int *tabuList;
+    int length;
+} ant;
 
-typedef struct {
-    int id;
-    float x;
-    float y;
-} nodeCoords;
-
-void buildGraph(char * filePath);
-char** readGraphFile(char *filePath, int *bufferSize);
-graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength);
+ant* initAnts(int antCount);
+void placeAnts(ant* antArray, int antCount, int nodeCount);
+void moveAnts(ant* ants);
+int findShortestPath(ant* ants, int* path);
+void updatePheromoneLevel(graphEntry **adjacenceMatrix);
+int antColonyOptimize(char *filePath, int *path, int cycles, int numAnts);
 
 #endif //ACO_SEQ_ACO_H

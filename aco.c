@@ -3,79 +3,51 @@
 //
 
 #include "aco.h"
+#include "graph.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <math.h>
+#include <time.h>
 
-char** readGraphFile(char *filePath, int *bufferSize) {
-    FILE *file = fopen(filePath, "r");
 
-    // Allocate Array with 10000 potential entries of nodes
-    int bufferLength = 10000;
-    char **lineBuffer = (char**) malloc(bufferLength * sizeof(char*));
-    for (int i = 0; i < bufferLength; i++) {
-        lineBuffer[i] = (char *) calloc(14, sizeof(char));
-    }
-
-    if (file) {
-        printf("%s %s\n", "Try to open file ", filePath);
-        printf("%s", "Datei erfolgreich geöffnet\n");
-
-        int index = 0;
-        while (!feof(file)) {
-            fread(lineBuffer[index], sizeof(char), 12, file);
-            index++;
+ant* initAnts(int antCount) {
+    if (antCount > 0) {
+        ant* antArray = (ant*)malloc(antCount * sizeof(ant));
+        for (int i = 0; i < antCount; i++) {
+            ant newAnt;
+            newAnt.length = 0;
+            antArray[i] = newAnt;
         }
-        *bufferSize = index;
-
-        // Free unnecessary memory
-        for (int i = index-1; i < bufferLength; i++) {
-            free(lineBuffer[i]);
-        }
+        return antArray;
     }
-
-
-    return lineBuffer;
+    else return NULL;
 }
 
-graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength) {
-    //Init AdjacenceMatrix & read Node Data in One Loop because of performance reasons
-    graphEntry **adjMatrix = (graphEntry**)malloc(arrayLength * sizeof(graphEntry*));
-    nodeCoords nodes[arrayLength];
-    for (int i = 0; i < arrayLength; i++) {
-        sscanf(nodeArray[i], "%d %f %f\n", &nodes[i].id, &nodes[i].x, &nodes[i].y);
-        adjMatrix[i] = (graphEntry*)malloc(arrayLength * sizeof(graphEntry));
+void placeAnts(ant* antArray, int antCount, int nodeCount) {
+    time_t t;
+    srand((unsigned) time(&t));
+    for (int i = 0; i < antCount; i++) {
+        antArray[i].tabuList = (int*) malloc(nodeCount * sizeof(int));
+        antArray[i].tabuList[0] = (rand() + 1) % 280;
     }
-
-    // Calculate Euclidian Distance between all nodes and Init Pheromones
-    for (int i = 0; i < arrayLength; i++) {
-        for (int j = 0; j < arrayLength; j++) {
-            graphEntry entry;
-            float xd = nodes[i].x - nodes[j].x;
-            float yd = nodes[i].y - nodes[j].y;
-            entry.cost = (float)nearbyint(sqrt((double)powf(xd, 2) + (double)powf(yd, 2)));
-            //TODO Check Pheromone Value -> Laut Buch "a small positive number"
-            entry.pheromone = 0.2;
-            adjMatrix[i][j] = entry;
-        }
-    }
-
-    return adjMatrix;
 }
 
-void buildGraph(char *filePath) {
-    int bufferLength;
-    char **lines = readGraphFile(filePath, &bufferLength);
-    graphEntry **adjMatrix = buildAdjacenceMatrix(lines, bufferLength);
+void moveAnts(ant* ants) {
 
-    //Free Memory of Read Lines
-    for (int i = 0; i < bufferLength; i++) {
-        free(lines[i]);
-        free(adjMatrix[i]);
-    }
-    free(lines);
-    free(adjMatrix);
 }
 
+int findShortestPath(ant* ants, int* path) {
+
+}
+
+void updatePheromoneLevel(graphEntry **adjacenceMatrix) {
+
+}
+
+int antColonyOptimize(char *filePath, int *path, int cycles, int numAnts) {
+    graphEntry **adjacenceMatrix = NULL;
+    int adjacenceMatrixLength = 0;
+    adjacenceMatrixLength = buildGraph("../a280.tsp", adjacenceMatrix);
+    if (numAnts == 0) numAnts = adjacenceMatrixLength;
+    ant* ants = initAnts(numAnts);
+    placeAnts(ants, numAnts, adjacenceMatrixLength);
+}

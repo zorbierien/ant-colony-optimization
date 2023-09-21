@@ -1,4 +1,0 @@
-C:\Windows\system32\wsl.exe --distribution Ubuntu-22.04 --exec /bin/bash -c "export CMAKE_COLOR_DIAGNOSTICS=ON && export CLION_IDE=TRUE && export JETBRAINS_IDE=TRUE && cd '/home/spolifka/dev/Uni/Forschungsseminar/ACO SEQ/cmake-build-debug' && /usr/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G 'CodeBlocks - Unix Makefiles' -S '/home/spolifka/dev/Uni/Forschungsseminar/ACO SEQ' -B '/home/spolifka/dev/Uni/Forschungsseminar/ACO SEQ/cmake-build-debug'"
--- Configuring done (0.0s)
--- Generating done (0.0s)
--- Build files have been written to: /home/spolifka/dev/Uni/Forschungsseminar/ACO SEQ/cmake-build-debug
