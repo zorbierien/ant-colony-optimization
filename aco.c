@@ -66,16 +66,12 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     double randomNumber = (double)rand() / (double)RAND_MAX;
     double sum = 0;
     int index = 0;
-    // Necessary because of small differences in last periods -> because of limited accuracy of machines
-    if (randomNumber == 1) return adjMatrixLength;
-    else {
-        do {
-            sum += probabilities[index];
-            index++;
-        }
-        while (sum < randomNumber);
-        return index;
+    do {
+        sum += probabilities[index];
+        index++;
     }
+    while (sum < randomNumber);
+    return index;
 }
 
 void moveAnts(ant *ants, graphEntry **adjMatrix, int antCount, int adjMatrixLength) {
