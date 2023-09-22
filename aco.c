@@ -144,6 +144,7 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
 
     int pathLength = INFINITY;
     for (int it = 0; it < cycles; it++) {
+        printf("Starting cycle %d\n", it + 1);
         placeAnts(ants, numAnts, adjacenceMatrixLength);
         for (int i = 0; i < adjacenceMatrixLength; i++) {
             moveAnts(ants, adjacenceMatrix, numAnts, adjacenceMatrixLength);
