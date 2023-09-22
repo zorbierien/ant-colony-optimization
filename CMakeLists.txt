@@ -7,5 +7,6 @@ add_executable(ACO_SEQ main.c
         aco.c
         aco.h
         graph.c
-        graph.h)
+        graph.h
+)
 target_link_libraries(ACO_SEQ m)

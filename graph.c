@@ -61,9 +61,9 @@ graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength) {
             graphEntry entry;
             float xd = nodes[i].x - nodes[j].x;
             float yd = nodes[i].y - nodes[j].y;
-            entry.cost = (float)nearbyint(sqrt((double)powf(xd, 2) + (double)powf(yd, 2)));
+            entry.cost = (int)nearbyint(sqrt((double)powf(xd, 2) + (double)powf(yd, 2)));
             //TODO Check Pheromone Value -> Laut Buch "a small positive number"
-            entry.pheromone = 0.2;
+            entry.pheromone = 0.1;
             adjMatrix[i][j] = entry;
         }
     }
@@ -71,7 +71,7 @@ graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength) {
     return adjMatrix;
 }
 
-int buildGraph(char *filePath, graphEntry** adjacenceMatrix) {
+int buildGraph(char *filePath, graphEntry ***adjacenceMatrix) {
     int bufferLength;
     char **lines = readGraphFile(filePath, &bufferLength);
     graphEntry **adjMatrix = buildAdjacenceMatrix(lines, bufferLength);
@@ -82,7 +82,7 @@ int buildGraph(char *filePath, graphEntry** adjacenceMatrix) {
     }
     free(lines);
 
-    adjacenceMatrix = adjMatrix;
+    *adjacenceMatrix = adjMatrix;
     return bufferLength;
 
 // Print Adjacence Matrix

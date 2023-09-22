@@ -6,7 +6,7 @@
 #define ACO_SEQ_GRAPH_H
 
 typedef struct {
-    float cost;
+    int cost;
     double pheromone;
 } graphEntry;
 
@@ -16,7 +16,7 @@ typedef struct {
     float y;
 } nodeCoords;
 
-int buildGraph(char * filePath, graphEntry** adjacenceMatrix);
+int buildGraph(char * filePath, graphEntry ***adjacenceMatrix);
 char** readGraphFile(char *filePath, int *bufferSize);
 graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength);
 

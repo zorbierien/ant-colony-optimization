@@ -5,17 +5,21 @@
 #ifndef ACO_SEQ_ACO_H
 #define ACO_SEQ_ACO_H
 #include "graph.h"
+#include <stdbool.h>
 
 typedef struct {
-    int *tabuList;
+    bool *tabuList;
+    int* path;
+    int hop;
+    int currentNode;
     int length;
 } ant;
 
-ant* initAnts(int antCount);
+ant* initAnts(int antCount, int nodeCount);
 void placeAnts(ant* antArray, int antCount, int nodeCount);
-void moveAnts(ant* ants);
-int findShortestPath(ant* ants, int* path);
-void updatePheromoneLevel(graphEntry **adjacenceMatrix);
-int antColonyOptimize(char *filePath, int *path, int cycles, int numAnts);
+void moveAnts(ant *ants, graphEntry **adjMatrix, int antCount, int adjMatrixLength);
+int findShortestPath(ant *ants, int antCount, int **path);
+void updatePheromoneLevel(graphEntry **adjacenceMatrix, int adjacenceMatrixLength, ant* ants, int antCount);
+int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts);
 
 #endif //ACO_SEQ_ACO_H
