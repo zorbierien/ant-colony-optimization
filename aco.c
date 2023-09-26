@@ -18,7 +18,7 @@ ant* initAnts(int antCount, int nodeCount) {
             ant newAnt;
             newAnt.length = 0;
             newAnt.hop = 0;
-            newAnt.path = (int*)calloc(nodeCount, sizeof(int));
+            newAnt.path = (int*)calloc(nodeCount+1, sizeof(int));
             newAnt.tabuList = (bool*)calloc(nodeCount, sizeof(bool));
             antArray[i] = newAnt;
         }
@@ -88,32 +88,26 @@ void moveAnts(ant *ants, graphEntry **adjMatrix, int antCount, int adjMatrixLeng
 int findShortestPath(ant *ants, int antCount, int **path) {
     int min = INFINITY;
     for (int i = 0; i < antCount; i++) {
-        if (ants[i].length < min) min = ants[i].length;
+        if (ants[i].length < min) {
+            min = ants[i].length;
+            *path = ants[i].path;
+        }
     }
     return min;
 }
 
-void updatePheromoneLevel(graphEntry **adjacenceMatrix, int adjacenceMatrixLength, ant* ants, int antCount) {
+void updatePheromoneLevel(graphEntry **adjacenceMatrix, const int *path, int pathArrayLength, long pathLength) {
     double ro = 0.5;
-    double Q = 100;
-    double deltaPheromones[adjacenceMatrixLength][adjacenceMatrixLength];
-    for (int i = 0; i < adjacenceMatrixLength; i++) {
-        for (int j = 0; j < adjacenceMatrixLength; j++) {
-            deltaPheromones[i][j] = 0.0;
-        }
-    }
+    // Sollte bekannt sein
+    long minimumTourLength = 2519;
+    double pheromoneMin = 1.0 / (ro * (double)minimumTourLength * pathArrayLength);
+    double pheromoneMax = 1.0 / (ro * (double)minimumTourLength);
 
-    for (int i = 0; i < antCount; i++) {
-        double pheromoneAdd = Q / ants[i].length;
-        for (int j = 0; j < adjacenceMatrixLength - 1; j++) {
-            deltaPheromones[ants[i].path[j]-1][ants[i].path[j+1]-1] += pheromoneAdd;
-        }
-    }
-
-    for (int i = 0; i < adjacenceMatrixLength; i++) {
-        for (int j = 0; j < adjacenceMatrixLength; j++) {
-            adjacenceMatrix[i][j].pheromone = (1.0-ro) * adjacenceMatrix[i][j].pheromone + deltaPheromones[i][j];
-        }
+    double pheromoneAdd = 1 / (double)pathLength;
+    for (int i = 0; i < pathArrayLength - 1; ++i) {
+        adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = (1.0-ro) * adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone + pheromoneAdd;
+        if (adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone > pheromoneMax) adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = pheromoneMax;
+        if (adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone < pheromoneMin) adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = pheromoneMin;
     }
 }
 
@@ -124,7 +118,6 @@ void resetAnts(ant *ants, int antCount, int nodeCount) {
         ants[i].currentNode = 0;
         for (int j = 0; j < nodeCount; j++) {
             ants[i].tabuList[j] = false;
-            ants[i].path[j] = 0;
         }
     }
 }
@@ -153,7 +146,7 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
             *path = singlePathTraverse;
         }
 
-        updatePheromoneLevel(adjacenceMatrix, adjacenceMatrixLength, ants, numAnts);
+        updatePheromoneLevel(adjacenceMatrix, singlePathTraverse, adjacenceMatrixLength+1, singlePathLength);
         resetAnts(ants, numAnts, adjacenceMatrixLength);
     }
 

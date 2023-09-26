@@ -10,11 +10,11 @@ int main() {
     gettimeofday(&beforeTime, NULL);
     unsigned long long beforeTimestamp = (unsigned long long)beforeTime.tv_sec * 1000000 + beforeTime.tv_usec;
 
-    length = antColonyOptimize("../a280.tsp", &path, 10, 280);
+    length = antColonyOptimize("../a280.tsp", &path, 5, 280);
 
     struct timeval afterTime;
-    gettimeofday(&beforeTime, NULL);
-    unsigned long long afterTimestamp = (unsigned long long)beforeTime.tv_sec * 1000000 + beforeTime.tv_usec;
+    gettimeofday(&afterTime, NULL);
+    unsigned long long afterTimestamp = (unsigned long long)afterTime.tv_sec * 1000000 + afterTime.tv_usec;
 
     printf("Shortest Path: %i\n", length);
     printf("Duration: %llu\n", afterTimestamp - beforeTimestamp);

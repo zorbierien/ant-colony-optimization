@@ -9,7 +9,7 @@
 
 typedef struct {
     bool *tabuList;
-    int* path;
+    int *path;
     int hop;
     int currentNode;
     int length;
@@ -19,7 +19,7 @@ ant* initAnts(int antCount, int nodeCount);
 void placeAnts(ant* antArray, int antCount, int nodeCount);
 void moveAnts(ant *ants, graphEntry **adjMatrix, int antCount, int adjMatrixLength);
 int findShortestPath(ant *ants, int antCount, int **path);
-void updatePheromoneLevel(graphEntry **adjacenceMatrix, int adjacenceMatrixLength, ant* ants, int antCount);
+void updatePheromoneLevel(graphEntry **adjacenceMatrix, const int *path, int pathArrayLength, long pathLength);
 int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts);
 
 #endif //ACO_SEQ_ACO_H

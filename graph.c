@@ -15,7 +15,7 @@ char** readGraphFile(char *filePath, int *bufferSize) {
     int bufferLength = 10000;
     char **lineBuffer = (char**) malloc(bufferLength * sizeof(char*));
     for (int i = 0; i < bufferLength; i++) {
-        lineBuffer[i] = (char *) calloc(14, sizeof(char));
+        lineBuffer[i] = (char *) calloc(13, sizeof(char));
     }
 
     if (file) {
@@ -24,7 +24,7 @@ char** readGraphFile(char *filePath, int *bufferSize) {
 
         int index = 0;
         while (!feof(file)) {
-            fread(lineBuffer[index], sizeof(char), 13, file);
+            fread(lineBuffer[index], sizeof(char), 12, file);
             if (strncmp(lineBuffer[index], "EOF", 3) == 0) {
                 break;
             }
@@ -63,7 +63,7 @@ graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength) {
             float yd = nodes[i].y - nodes[j].y;
             entry.cost = (int)nearbyint(sqrt((double)powf(xd, 2) + (double)powf(yd, 2)));
             //TODO Check Pheromone Value -> Laut Buch "a small positive number"
-            entry.pheromone = 0.1;
+            entry.pheromone = 0.00079396585946804284;
             adjMatrix[i][j] = entry;
         }
     }
