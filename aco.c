@@ -18,7 +18,7 @@ ant* initAnts(int antCount, int nodeCount) {
             ant newAnt;
             newAnt.length = 0;
             newAnt.hop = 0;
-            newAnt.path = (int*)calloc(nodeCount, sizeof(int));
+            newAnt.path = (int*)calloc(nodeCount + 1, sizeof(int));
             newAnt.tabuList = (bool*)calloc(nodeCount, sizeof(bool));
             antArray[i] = newAnt;
         }
@@ -124,7 +124,6 @@ void resetAnts(ant *ants, int antCount, int nodeCount) {
         ants[i].currentNode = 0;
         for (int j = 0; j < nodeCount; j++) {
             ants[i].tabuList[j] = false;
-            ants[i].path[j] = 0;
         }
     }
 }
