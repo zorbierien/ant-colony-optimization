@@ -96,16 +96,24 @@ int findShortestPath(ant *ants, int antCount, int **path) {
     return min;
 }
 
-void updatePheromoneLevel(graphEntry **adjacenceMatrix, const int *path, int pathArrayLength, long pathLength) {
+void updatePheromoneLevel(graphEntry **adjacenceMatrix, const int adjacenceMatrixLength, const int *path, int pathArrayLength, long pathLength) {
     double ro = 0.5;
     // Sollte bekannt sein
-    long minimumTourLength = 2519;
+    long minimumTourLength = 21282;
     double pheromoneMin = 1.0 / (ro * (double)minimumTourLength * pathArrayLength);
     double pheromoneMax = 1.0 / (ro * (double)minimumTourLength);
 
+    for (int i = 0; i < adjacenceMatrixLength; ++i) {
+        for (int j = 0; j < adjacenceMatrixLength; ++j) {
+            adjacenceMatrix[i][j].pheromone = (1.0-ro) * adjacenceMatrix[i][j].pheromone;
+            if (adjacenceMatrix[i][j].pheromone < pheromoneMin) adjacenceMatrix[i][j].pheromone = pheromoneMin;
+            if (adjacenceMatrix[i][j].pheromone > pheromoneMax) adjacenceMatrix[i][j].pheromone = pheromoneMax;
+        }
+    }
+
     double pheromoneAdd = 1 / (double)pathLength;
     for (int i = 0; i < pathArrayLength - 1; ++i) {
-        adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = (1.0-ro) * adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone + pheromoneAdd;
+        adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone + pheromoneAdd;
         if (adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone > pheromoneMax) adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = pheromoneMax;
         if (adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone < pheromoneMin) adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = pheromoneMin;
     }
@@ -146,7 +154,13 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
             *path = singlePathTraverse;
         }
 
-        updatePheromoneLevel(adjacenceMatrix, singlePathTraverse, adjacenceMatrixLength+1, singlePathLength);
+        updatePheromoneLevel(adjacenceMatrix, adjacenceMatrixLength,singlePathTraverse, adjacenceMatrixLength+1, singlePathLength);
+//        for (int i = 0; i < adjacenceMatrixLength; i++) {
+//            for (int j = 0; j < adjacenceMatrixLength; j++) {
+//                printf("%f\t", adjacenceMatrix[i][j].pheromone);
+//            }
+//            printf("\n");
+//        }
         resetAnts(ants, numAnts, adjacenceMatrixLength);
     }
 
