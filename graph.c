@@ -15,7 +15,7 @@ char** readGraphFile(char *filePath, int *bufferSize) {
     int bufferLength = 10000;
     char **lineBuffer = (char**) malloc(bufferLength * sizeof(char*));
     for (int i = 0; i < bufferLength; i++) {
-        lineBuffer[i] = (char *) calloc(13, sizeof(char));
+        lineBuffer[i] = (char *) calloc(20, sizeof(char));
     }
 
     if (file) {
@@ -24,7 +24,7 @@ char** readGraphFile(char *filePath, int *bufferSize) {
 
         int index = 0;
         while (!feof(file)) {
-            fread(lineBuffer[index], sizeof(char), 12, file);
+            getline(&lineBuffer[index], (size_t*)&bufferLength, file);
             if (strncmp(lineBuffer[index], "EOF", 3) == 0) {
                 break;
             }
