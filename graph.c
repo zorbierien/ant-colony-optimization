@@ -62,7 +62,6 @@ graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength) {
             float xd = nodes[i].x - nodes[j].x;
             float yd = nodes[i].y - nodes[j].y;
             entry.cost = (int)nearbyint(sqrt((double)powf(xd, 2) + (double)powf(yd, 2)));
-            //TODO Check Pheromone Value -> Laut Buch "a small positive number"
             entry.pheromone = 100;
             adjMatrix[i][j] = entry;
         }

@@ -37,11 +37,22 @@ void placeAnts(ant* antArray, int antCount, int nodeCount) {
     }
 }
 
+/**
+ * @param a
+ * @param b
+ * @return
+ */
+int probSort(const void *a, const void *b) {
+    if (((prob*)a)->probability > ((prob*)b)->probability) return -1;
+    if (((prob*)a)->probability < ((prob*)b)->probability) return 1;
+    return 0;
+}
+
 int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     double alpha = 1.0;
     double beta = 0.5;
     double overallPathSum = 0;
-    double probabilities[adjMatrixLength];
+    prob probabilities[adjMatrixLength];
 
     // Calculate sum of Pheromone * Visibilty of all possible ways
     for (int i = 0; i < adjMatrixLength; i++) {
@@ -56,22 +67,29 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
 
     // Calculate probabilities for each path
     for (int i = 0; i < adjMatrixLength; i++) {
-        if (singleAnt.tabuList[i]) probabilities[i] = 0;
+        if (singleAnt.tabuList[i]) {
+            probabilities[i].probability = 0;
+            probabilities[i].node = i + 1;
+        }
         else {
-            probabilities[i] = (pow(adjMatrix[singleAnt.currentNode-1][i].pheromone, alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][i].cost, beta)) / overallPathSum;
+            probabilities[i].probability = (pow(adjMatrix[singleAnt.currentNode-1][i].pheromone, alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][i].cost, beta)) / overallPathSum;
+            probabilities[i].node = i + 1;
         }
     }
+
+    //qsort(probabilities, adjMatrixLength, sizeof(prob), probSort);
 
     // Random  number between 0 and 1
     double randomNumber = (double)rand() / (double)RAND_MAX;
     double sum = 0;
-    int index = 0;
+    int index = -1;
     do {
-        sum += probabilities[index];
+        sum += probabilities[index+1].probability;
         index++;
     }
     while (sum < randomNumber);
-    return index;
+
+    return probabilities[index].node;
 }
 
 void moveAnts(ant *ants, graphEntry **adjMatrix, int antCount, int adjMatrixLength) {
@@ -100,7 +118,7 @@ void updatePheromoneLevel(graphEntry **adjacenceMatrix, const int adjacenceMatri
     double ro = 0.5;
     // Sollte bekannt sein
     long minimumTourLength = 21282;
-    double pheromoneMin = 1.0 / (ro * (double)minimumTourLength * pathArrayLength);
+    double pheromoneMin = 1.0 / (ro * (double)minimumTourLength * pow(pathArrayLength, 2));
     double pheromoneMax = 1.0 / (ro * (double)minimumTourLength);
 
     for (int i = 0; i < adjacenceMatrixLength; ++i) {
