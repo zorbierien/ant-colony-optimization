@@ -12,10 +12,11 @@ char** readGraphFile(char *filePath, int *bufferSize) {
     FILE *file = fopen(filePath, "r");
 
     // Allocate Array with 10000 potential entries of nodes
-    int bufferLength = 10000;
+    int bufferLength = 8;
+    int strlen = 20;
     char **lineBuffer = (char**) malloc(bufferLength * sizeof(char*));
     for (int i = 0; i < bufferLength; i++) {
-        lineBuffer[i] = (char *) calloc(20, sizeof(char));
+        lineBuffer[i] = (char *) calloc(strlen, sizeof(char));
     }
 
     if (file) {
@@ -24,7 +25,16 @@ char** readGraphFile(char *filePath, int *bufferSize) {
 
         int index = 0;
         while (!feof(file)) {
-            getline(&lineBuffer[index], (size_t*)&bufferLength, file);
+            // OPTIMIZED Allocate more buffer if needed
+            if (bufferLength < index + 1) {
+                lineBuffer = (char**)realloc(lineBuffer, bufferLength * 2 * sizeof (char*));
+                if (lineBuffer == NULL) exit(1);
+                for (int i = bufferLength; i < bufferLength * 2; i++) {
+                    lineBuffer[i] = (char *) calloc(strlen, sizeof(char));
+                }
+                bufferLength *= 2;
+            }
+            getline(&lineBuffer[index], (size_t*)&strlen, file);
             if (strncmp(lineBuffer[index], "EOF", 3) == 0) {
                 break;
             }
@@ -56,14 +66,24 @@ graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength) {
     }
 
     // Calculate Euclidian Distance between all nodes and Init Pheromones
+    // OPTIMIZED: Use the Symmetry of the matrix
     for (int i = 0; i < arrayLength; i++) {
-        for (int j = 0; j < arrayLength; j++) {
+        graphEntry doubleEntry;
+        doubleEntry.cost = 0;
+        doubleEntry.pheromone = 100;
+        adjMatrix[i][i] = doubleEntry;
+        for (int j = i + 1; j < arrayLength; j++) {
             graphEntry entry;
             float xd = nodes[i].x - nodes[j].x;
             float yd = nodes[i].y - nodes[j].y;
             entry.cost = (int)nearbyint(sqrt((double)powf(xd, 2) + (double)powf(yd, 2)));
             entry.pheromone = 100;
             adjMatrix[i][j] = entry;
+
+            graphEntry symmetricEntry;
+            symmetricEntry.cost = entry.cost;
+            symmetricEntry.pheromone = entry.pheromone;
+            adjMatrix[j][i] = symmetricEntry;
         }
     }
 
@@ -83,13 +103,4 @@ int buildGraph(char *filePath, graphEntry ***adjacenceMatrix) {
 
     *adjacenceMatrix = adjMatrix;
     return bufferLength;
-
-// Print Adjacence Matrix
-//    for (int i = 0; i < bufferLength; i++) {
-//        printf("%i: ", i+1);
-//        for (int j = 0; j < bufferLength; j++) {
-//            printf("%f\t", adjMatrix[i][j].cost);
-//        }
-//        printf("\n");
-//    }
 }

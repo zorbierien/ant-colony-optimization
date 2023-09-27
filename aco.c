@@ -10,6 +10,14 @@
 #include <math.h>
 #include <stdbool.h>
 
+struct mmasParams {
+    float ro;
+    float alpha;
+    float beta;
+    int minimumTourLength;
+};
+
+struct mmasParams params = {.ro = 0.5f, .alpha = 1.0f, .beta= 0.5f, .minimumTourLength = 21282};
 
 ant* initAnts(int antCount, int nodeCount) {
     if (antCount > 0) {
@@ -37,28 +45,19 @@ void placeAnts(ant* antArray, int antCount, int nodeCount) {
     }
 }
 
-/**
- * @param a
- * @param b
- * @return
- */
-int probSort(const void *a, const void *b) {
-    if (((prob*)a)->probability > ((prob*)b)->probability) return -1;
-    if (((prob*)a)->probability < ((prob*)b)->probability) return 1;
-    return 0;
-}
-
 int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
-    double alpha = 1.0;
-    double beta = 0.5;
     double overallPathSum = 0;
     prob probabilities[adjMatrixLength];
 
     // Calculate sum of Pheromone * Visibilty of all possible ways
+    // OPTIMIZED: Einzelne Heuristik hier schon ion probabilities Array eingefügt, sodass anschließend nur noch eine Division notwendig
+    double singleHeuristic;
     for (int i = 0; i < adjMatrixLength; i++) {
         if (singleAnt.tabuList[i]) continue;
         else {
-            overallPathSum += pow(adjMatrix[singleAnt.currentNode-1][i].pheromone, alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][i].cost, beta);
+            singleHeuristic = pow(adjMatrix[singleAnt.currentNode-1][i].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][i].cost, params.beta);
+            overallPathSum += singleHeuristic;
+            probabilities[i].probability = singleHeuristic;
         }
     }
 
@@ -66,18 +65,17 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     if (overallPathSum == 0) return singleAnt.path[0];
 
     // Calculate probabilities for each path
+    //OPTIMIZED: probability wird hier nur noch durch overallPathSum geteilt, statt vollkommen neu berechnet
     for (int i = 0; i < adjMatrixLength; i++) {
         if (singleAnt.tabuList[i]) {
             probabilities[i].probability = 0;
             probabilities[i].node = i + 1;
         }
         else {
-            probabilities[i].probability = (pow(adjMatrix[singleAnt.currentNode-1][i].pheromone, alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][i].cost, beta)) / overallPathSum;
+            probabilities[i].probability /= overallPathSum;
             probabilities[i].node = i + 1;
         }
     }
-
-    //qsort(probabilities, adjMatrixLength, sizeof(prob), probSort);
 
     // Random  number between 0 and 1
     double randomNumber = (double)rand() / (double)RAND_MAX;
@@ -114,26 +112,28 @@ int findShortestPath(ant *ants, int antCount, int **path) {
     return min;
 }
 
+// For Symmetric TSP-Problem
 void updatePheromoneLevel(graphEntry **adjacenceMatrix, const int adjacenceMatrixLength, const int *path, int pathArrayLength, long pathLength) {
-    double ro = 0.5;
     // Sollte bekannt sein
-    long minimumTourLength = 21282;
-    double pheromoneMin = 1.0 / (ro * (double)minimumTourLength * pow(pathArrayLength, 2));
-    double pheromoneMax = 1.0 / (ro * (double)minimumTourLength);
+    double pheromoneMin = 1.0f / (params.ro * (float)params.minimumTourLength * (float)pathArrayLength * (float)pathArrayLength);
+    double pheromoneMax = 1.0f / (params.ro * (float)params.minimumTourLength);
 
+    //OPTIMIZED: Innere Schleife nur von i+1 bis j um Symmetrie der Matrix zu nutzen
     for (int i = 0; i < adjacenceMatrixLength; ++i) {
-        for (int j = 0; j < adjacenceMatrixLength; ++j) {
-            adjacenceMatrix[i][j].pheromone = (1.0-ro) * adjacenceMatrix[i][j].pheromone;
-            if (adjacenceMatrix[i][j].pheromone < pheromoneMin) adjacenceMatrix[i][j].pheromone = pheromoneMin;
-            if (adjacenceMatrix[i][j].pheromone > pheromoneMax) adjacenceMatrix[i][j].pheromone = pheromoneMax;
+        adjacenceMatrix[i][i].pheromone = (1.0-params.ro) * adjacenceMatrix[i][i].pheromone;
+        for (int j = i + 1; j < adjacenceMatrixLength; ++j) {
+            double newPheromone = (1.0-params.ro) * adjacenceMatrix[i][j].pheromone;
+            adjacenceMatrix[i][j].pheromone = adjacenceMatrix[j][i].pheromone = newPheromone;
+            if (adjacenceMatrix[i][j].pheromone < pheromoneMin) adjacenceMatrix[i][j].pheromone = adjacenceMatrix[j][i].pheromone = pheromoneMin;
+            if (adjacenceMatrix[i][j].pheromone > pheromoneMax) adjacenceMatrix[i][j].pheromone = adjacenceMatrix[j][i].pheromone = pheromoneMax;
         }
     }
 
     double pheromoneAdd = 1 / (double)pathLength;
     for (int i = 0; i < pathArrayLength - 1; ++i) {
-        adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone + pheromoneAdd;
-        if (adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone > pheromoneMax) adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = pheromoneMax;
-        if (adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone < pheromoneMin) adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = pheromoneMin;
+        adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = adjacenceMatrix[path[i+1]-1][path[i]-1].pheromone = adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone + pheromoneAdd;
+        if (adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone > pheromoneMax) adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = adjacenceMatrix[path[i+1]-1][path[i]-1].pheromone = pheromoneMax;
+        if (adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone < pheromoneMin) adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = adjacenceMatrix[path[i+1]-1][path[i]-1].pheromone = pheromoneMin;
     }
 }
 
@@ -173,12 +173,6 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
         }
 
         updatePheromoneLevel(adjacenceMatrix, adjacenceMatrixLength,singlePathTraverse, adjacenceMatrixLength+1, singlePathLength);
-//        for (int i = 0; i < adjacenceMatrixLength; i++) {
-//            for (int j = 0; j < adjacenceMatrixLength; j++) {
-//                printf("%f\t", adjacenceMatrix[i][j].pheromone);
-//            }
-//            printf("\n");
-//        }
         resetAnts(ants, numAnts, adjacenceMatrixLength);
     }
 
