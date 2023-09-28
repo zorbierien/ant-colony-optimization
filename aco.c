@@ -7,10 +7,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <math.h>
 #include <stdbool.h>
 #include <immintrin.h>
 #include <limits.h>
+#define AMD_LIBM_VEC_EXPERIMENTAL
+#include "lib/amd-libm/include/amdlibm.h"
+#include "lib/amd-libm/include/amdlibm_vec.h"
 
 struct mmasParams {
     float ro;
@@ -53,35 +55,63 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
 
     // Calculate sum of Pheromone * Visibilty of all possible ways
     // OPTIMIZED: Einzelne Heuristik hier schon ion probabilities Array eingefügt, sodass anschließend nur noch eine Division notwendig
+    //VECTORIZED: Use Vectors to calculate probability and overallPathSums
     __m256d pathSum = _mm256_set1_pd(0);
     __m256d probabilityVectors[adjMatrixLength / 4 + 1];
-    double vecArray[4];
+    __m256d alphaVector = _mm256_set1_pd(params.alpha);
+    __m256d betaVector = _mm256_set1_pd(params.beta);
     for (int i = 0; i < adjMatrixLength / 4; i++) {
-        if (singleAnt.tabuList[4*i]) vecArray[0] = 0;
-        else {
-            vecArray[0] = pow(adjMatrix[singleAnt.currentNode-1][4*i].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i].cost, params.beta);
+        double pheromoneArray[4];
+        double costArray[4];
+        __m256d pheromoneVector;
+        __m256d costVector;
+        if (singleAnt.tabuList[4*i]) {
+            costArray[0] = INT_MAX;
+            pheromoneArray[0] = 0;
         }
-        if (singleAnt.tabuList[4*i+1]) vecArray[1] = 0;
         else {
-            vecArray[1] = pow(adjMatrix[singleAnt.currentNode-1][4*i+1].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i+1].cost, params.beta);
+            costArray[0] = adjMatrix[singleAnt.currentNode-1][4*i].cost;
+            pheromoneArray[0] = adjMatrix[singleAnt.currentNode-1][4*i].pheromone;
+            //vecArray[0] = amd_pow(adjMatrix[singleAnt.currentNode-1][4*i].pheromone, params.alpha) * amd_pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i].cost, params.beta);
         }
-        if (singleAnt.tabuList[4*i+2]) vecArray[2] = 0;
+        if (singleAnt.tabuList[4*i+1]) {
+            costArray[1] = INT_MAX;
+            pheromoneArray[1] = 0;
+        }
         else {
-            vecArray[2] = pow(adjMatrix[singleAnt.currentNode-1][4*i+2].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i+2].cost, params.beta);
+            costArray[1] = adjMatrix[singleAnt.currentNode-1][4*i+1].cost;
+            pheromoneArray[1] = adjMatrix[singleAnt.currentNode-1][4*i+1].pheromone;
+            //vecArray[0] = amd_pow(adjMatrix[singleAnt.currentNode-1][4*i].pheromone, params.alpha) * amd_pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i].cost, params.beta);
         }
-        if (singleAnt.tabuList[4*i+3]) vecArray[3] = 0;
+        if (singleAnt.tabuList[4*i+2]) {
+            costArray[2] = INT_MAX;
+            pheromoneArray[2] = 0;
+        }
         else {
-            vecArray[3] = pow(adjMatrix[singleAnt.currentNode-1][4*i+3].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i+3].cost, params.beta);
+            costArray[2] = adjMatrix[singleAnt.currentNode-1][4*i+2].cost;
+            pheromoneArray[2] = adjMatrix[singleAnt.currentNode-1][4*i+2].pheromone;
+            //vecArray[0] = amd_pow(adjMatrix[singleAnt.currentNode-1][4*i].pheromone, params.alpha) * amd_pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i].cost, params.beta);
         }
-        __m256d vector = _mm256_loadu_pd((double*)&vecArray);
-        probabilityVectors[i] = vector;
-        pathSum = _mm256_add_pd(pathSum, vector);
+        if (singleAnt.tabuList[4*i+3]) {
+            costArray[3] = INT_MAX;
+            pheromoneArray[3] = 0;
+        }
+        else {
+            costArray[3] = adjMatrix[singleAnt.currentNode-1][4*i+3].cost;
+            pheromoneArray[3] = adjMatrix[singleAnt.currentNode-1][4*i+3].pheromone;
+            //vecArray[0] = amd_pow(adjMatrix[singleAnt.currentNode-1][4*i].pheromone, params.alpha) * amd_pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i].cost, params.beta);
+        }
+        costVector = _mm256_loadu_pd((double*)&costArray);
+        __m256d visibiltyVector = _mm256_div_pd(_mm256_set1_pd(1), costVector);
+        pheromoneVector = _mm256_loadu_pd((double*)&pheromoneArray);
+        probabilityVectors[i] = _mm256_mul_pd(amd_vrd4_pow(pheromoneVector, alphaVector), amd_vrd4_pow(visibiltyVector, betaVector));
+        pathSum = _mm256_add_pd(pathSum, probabilityVectors[i]);
     }
 
     if (adjMatrixLength % 4 != 0) {
         int todo = adjMatrixLength % 4;
         for (int i = 0; i < todo; i++) {
-            probabilities[adjMatrixLength - 4 + i] = pow(adjMatrix[singleAnt.currentNode-1][i].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][i].cost, params.beta);
+            probabilities[adjMatrixLength - 4 + i] = amd_pow(adjMatrix[singleAnt.currentNode-1][i].pheromone, params.alpha) * amd_pow(1.0 / adjMatrix[singleAnt.currentNode-1][i].cost, params.beta);
             overallPathSum += probabilities[adjMatrixLength - 4 + i];
         }
         for (int i = todo; i < 4; i++) {
@@ -189,7 +219,6 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
 
     int pathLength = INT_MAX;
     for (int it = 0; it < cycles; it++) {
-        printf("Starting cycle %d\n", it + 1);
         placeAnts(ants, numAnts, adjacenceMatrixLength);
         for (int i = 0; i < adjacenceMatrixLength; i++) {
             moveAnts(ants, adjacenceMatrix, numAnts, adjacenceMatrixLength);
@@ -200,6 +229,7 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
         if (singlePathLength < pathLength) {
             pathLength = singlePathLength;
             *path = singlePathTraverse;
+            printf("New best route with length %d found in iteration %d\n", singlePathLength, it);
         }
 
         updatePheromoneLevel(adjacenceMatrix, adjacenceMatrixLength,singlePathTraverse, adjacenceMatrixLength+1, singlePathLength);
