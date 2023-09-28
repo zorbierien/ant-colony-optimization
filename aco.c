@@ -80,17 +80,12 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     if (adjMatrixLength % 4 != 0) {
         int todo = adjMatrixLength % 4;
         for (int i = 0; i < todo; i++) {
-            vecArray[i] = pow(adjMatrix[singleAnt.currentNode-1][i].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][i].cost, params.beta);
+            probabilities[adjMatrixLength - 4 + i] = pow(adjMatrix[singleAnt.currentNode-1][i].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][i].cost, params.beta);
+            overallPathSum += probabilities[adjMatrixLength - 4 + i];
         }
         for (int i = todo; i < 4; i++) {
-            vecArray[i] = 0;
+            probabilities[adjMatrixLength - 4 + i] = 0;
         }
-        __m256d vector = _mm256_set_pd(vecArray[3], vecArray[2], vecArray[1], vecArray[0]);
-        pathSum = _mm256_add_pd(pathSum, vector);
-        probabilityVectors[adjMatrixLength / 4] = vector;
-    }
-    else {
-        probabilityVectors[adjMatrixLength / 4] = _mm256_set1_pd(0);
     }
 
     double pathSumValues[4];
@@ -103,7 +98,7 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     // Calculate probabilities for each path
     //OPTIMIZED: probability wird hier nur noch durch overallPathSum geteilt, statt vollkommen neu berechnet
     pathSum = _mm256_set1_pd(overallPathSum);
-    for (int i = 0; i <= adjMatrixLength / 4; i++) {
+    for (int i = 0; i < adjMatrixLength / 4; i++) {
         _mm256_storeu_pd((double*)&probabilities[4*i], _mm256_div_pd(probabilityVectors[i], pathSum));
     }
 
