@@ -10,6 +10,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <immintrin.h>
+#include <limits.h>
 
 struct mmasParams {
     float ro;
@@ -72,7 +73,7 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
         else {
             vecArray[3] = pow(adjMatrix[singleAnt.currentNode-1][4*i+3].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i+3].cost, params.beta);
         }
-        __m256d vector = _mm256_set_pd(vecArray[3], vecArray[2], vecArray[1], vecArray[0]);
+        __m256d vector = _mm256_loadu_pd((double*)&vecArray);
         probabilityVectors[i] = vector;
         pathSum = _mm256_add_pd(pathSum, vector);
     }
@@ -102,6 +103,10 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
         _mm256_storeu_pd((double*)&probabilities[4*i], _mm256_div_pd(probabilityVectors[i], pathSum));
     }
 
+    for (int i = 0; i < adjMatrixLength % 4; i++) {
+        probabilities[adjMatrixLength / 4 + i] /= overallPathSum;
+    }
+
     // Random  number between 0 and 1
     double randomNumber = (double)rand() / (double)RAND_MAX;
     double sum = 0;
@@ -127,7 +132,7 @@ void moveAnts(ant *ants, graphEntry **adjMatrix, int antCount, int adjMatrixLeng
 }
 
 int findShortestPath(ant *ants, int antCount, int **path) {
-    int min = INFINITY;
+    int min = INT_MAX;
     for (int i = 0; i < antCount; i++) {
         if (ants[i].length < min) {
             min = ants[i].length;
@@ -182,7 +187,7 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
     if (numAnts == 0) numAnts = adjacenceMatrixLength;
     ant* ants = initAnts(numAnts, adjacenceMatrixLength);
 
-    int pathLength = INFINITY;
+    int pathLength = INT_MAX;
     for (int it = 0; it < cycles; it++) {
         printf("Starting cycle %d\n", it + 1);
         placeAnts(ants, numAnts, adjacenceMatrixLength);
