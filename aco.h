@@ -15,11 +15,6 @@ typedef struct {
     int length;
 } ant;
 
-typedef struct {
-    int node;
-    double probability;
-} prob;
-
 ant* initAnts(int antCount, int nodeCount);
 void placeAnts(ant* antArray, int antCount, int nodeCount);
 void moveAnts(ant *ants, graphEntry **adjMatrix, int antCount, int adjMatrixLength);

@@ -9,6 +9,7 @@
 #include <time.h>
 #include <math.h>
 #include <stdbool.h>
+#include <immintrin.h>
 
 struct mmasParams {
     float ro;
@@ -47,34 +48,63 @@ void placeAnts(ant* antArray, int antCount, int nodeCount) {
 
 int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     double overallPathSum = 0;
-    prob probabilities[adjMatrixLength];
+    double probabilities[adjMatrixLength];
 
     // Calculate sum of Pheromone * Visibilty of all possible ways
     // OPTIMIZED: Einzelne Heuristik hier schon ion probabilities Array eingefügt, sodass anschließend nur noch eine Division notwendig
-    double singleHeuristic;
-    for (int i = 0; i < adjMatrixLength; i++) {
-        if (singleAnt.tabuList[i]) continue;
+    __m256d pathSum = _mm256_set1_pd(0);
+    __m256d probabilityVectors[adjMatrixLength / 4 + 1];
+    double vecArray[4];
+    for (int i = 0; i < adjMatrixLength / 4; i++) {
+        if (singleAnt.tabuList[4*i]) vecArray[0] = 0;
         else {
-            singleHeuristic = pow(adjMatrix[singleAnt.currentNode-1][i].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][i].cost, params.beta);
-            overallPathSum += singleHeuristic;
-            probabilities[i].probability = singleHeuristic;
+            vecArray[0] = pow(adjMatrix[singleAnt.currentNode-1][4*i].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i].cost, params.beta);
         }
+        if (singleAnt.tabuList[4*i+1]) vecArray[1] = 0;
+        else {
+            vecArray[1] = pow(adjMatrix[singleAnt.currentNode-1][4*i+1].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i+1].cost, params.beta);
+        }
+        if (singleAnt.tabuList[4*i+2]) vecArray[2] = 0;
+        else {
+            vecArray[2] = pow(adjMatrix[singleAnt.currentNode-1][4*i+2].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i+2].cost, params.beta);
+        }
+        if (singleAnt.tabuList[4*i+3]) vecArray[3] = 0;
+        else {
+            vecArray[3] = pow(adjMatrix[singleAnt.currentNode-1][4*i+3].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i+3].cost, params.beta);
+        }
+        __m256d vector = _mm256_set_pd(vecArray[3], vecArray[2], vecArray[1], vecArray[0]);
+        probabilityVectors[i] = vector;
+        pathSum = _mm256_add_pd(pathSum, vector);
     }
+
+    if (adjMatrixLength % 4 != 0) {
+        int todo = adjMatrixLength % 4;
+        for (int i = 0; i < todo; i++) {
+            vecArray[i] = pow(adjMatrix[singleAnt.currentNode-1][i].pheromone, params.alpha) * pow(1.0 / adjMatrix[singleAnt.currentNode-1][i].cost, params.beta);
+        }
+        for (int i = todo; i < 4; i++) {
+            vecArray[i] = 0;
+        }
+        __m256d vector = _mm256_set_pd(vecArray[3], vecArray[2], vecArray[1], vecArray[0]);
+        pathSum = _mm256_add_pd(pathSum, vector);
+        probabilityVectors[adjMatrixLength / 4] = vector;
+    }
+    else {
+        probabilityVectors[adjMatrixLength / 4] = _mm256_set1_pd(0);
+    }
+
+    double pathSumValues[4];
+    _mm256_storeu_pd((double*)&pathSumValues, pathSum);
+    overallPathSum = pathSumValues[0] + pathSumValues[1] + pathSumValues[2] + pathSumValues[3];
 
     // Happens if Ant is at the last node
     if (overallPathSum == 0) return singleAnt.path[0];
 
     // Calculate probabilities for each path
     //OPTIMIZED: probability wird hier nur noch durch overallPathSum geteilt, statt vollkommen neu berechnet
-    for (int i = 0; i < adjMatrixLength; i++) {
-        if (singleAnt.tabuList[i]) {
-            probabilities[i].probability = 0;
-            probabilities[i].node = i + 1;
-        }
-        else {
-            probabilities[i].probability /= overallPathSum;
-            probabilities[i].node = i + 1;
-        }
+    pathSum = _mm256_set1_pd(overallPathSum);
+    for (int i = 0; i <= adjMatrixLength / 4; i++) {
+        _mm256_storeu_pd((double*)&probabilities[4*i], _mm256_div_pd(probabilityVectors[i], pathSum));
     }
 
     // Random  number between 0 and 1
@@ -82,12 +112,12 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     double sum = 0;
     int index = -1;
     do {
-        sum += probabilities[index+1].probability;
+        sum += probabilities[index+1];
         index++;
     }
     while (sum < randomNumber);
 
-    return probabilities[index].node;
+    return index+1;
 }
 
 void moveAnts(ant *ants, graphEntry **adjMatrix, int antCount, int adjMatrixLength) {
