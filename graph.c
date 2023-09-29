@@ -50,6 +50,8 @@ char** readGraphFile(char *filePath, int *bufferSize) {
         }
     }
 
+    fclose(file);
+
 
     return lineBuffer;
 }
