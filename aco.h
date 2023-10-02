@@ -17,9 +17,11 @@ typedef struct {
 
 ant* initAnts(int antCount, int nodeCount);
 void placeAnts(ant* antArray, int antCount, int nodeCount);
+double fastPow(double a, double b);
+int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength);
 void moveAnts(ant *ants, graphEntry **adjMatrix, int antCount, int adjMatrixLength);
 int findShortestPath(ant *ants, int antCount, int **path);
-void updatePheromoneLevel(graphEntry **adjacenceMatrix, const int adjacenceMatrixLength, const int *path, int pathArrayLength, long pathLength);
+void updatePheromoneLevel(graphEntry **adjacenceMatrix, int adjacenceMatrixLength, int *path, int pathArrayLength, long pathLength);
 int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts);
 
 #endif //ACO_SEQ_ACO_H
