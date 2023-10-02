@@ -213,23 +213,6 @@ void updatePheromoneLevel(graphEntry **adjacenceMatrix, const int adjacenceMatri
         }
     }
 
-//    for (int i = 0; i < adjacenceMatrixLength && adjacenceMatrixLength % 4 != 0; i++) {
-//        for (int j = 0; j < adjacenceMatrixLength % 4; j++) {
-//            adjacenceMatrix[i][adjacenceMatrixLength - 1 - j].pheromone = adjacenceMatrix[adjacenceMatrixLength - 1 - j][i].pheromone = adjacenceMatrix[i][adjacenceMatrixLength - 1 - j].pheromone * (1.0-params.ro);
-//        }
-//    }
-
-    //OPTIMIZED: Innere Schleife nur von i+1 bis j um Symmetrie der Matrix zu nutzen
-//    for (int i = 0; i < adjacenceMatrixLength; ++i) {
-//        adjacenceMatrix[i][i].pheromone = (1.0-params.ro) * adjacenceMatrix[i][i].pheromone;
-//        for (int j = i + 1; j < adjacenceMatrixLength; ++j) {
-//            double newPheromone = (1.0-params.ro) * adjacenceMatrix[i][j].pheromone;
-//            adjacenceMatrix[i][j].pheromone = adjacenceMatrix[j][i].pheromone = newPheromone;
-//            if (adjacenceMatrix[i][j].pheromone < pheromoneMin) adjacenceMatrix[i][j].pheromone = adjacenceMatrix[j][i].pheromone = pheromoneMin;
-//            if (adjacenceMatrix[i][j].pheromone > pheromoneMax) adjacenceMatrix[i][j].pheromone = adjacenceMatrix[j][i].pheromone = pheromoneMax;
-//        }
-//    }
-
     double pheromoneAdd = 1 / (double)pathLength;
     for (int i = 0; i < pathArrayLength - 1; ++i) {
         adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone = adjacenceMatrix[path[i+1]-1][path[i]-1].pheromone = adjacenceMatrix[path[i]-1][path[i+1]-1].pheromone + pheromoneAdd;
@@ -273,16 +256,7 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
             printf("Better solution %d found at iteration %d\n", pathLength, it);
         }
 
-//        int testPath[11] = {1,2,3,4,5,6,7,8,9,10,1};
-//        updatePheromoneLevel(adjacenceMatrix, adjacenceMatrixLength, (int*)&testPath, 11,  8100);
         updatePheromoneLevel(adjacenceMatrix, adjacenceMatrixLength, singlePathTraverse, adjacenceMatrixLength+1, singlePathLength);
-//        for (int i = 0; i < adjacenceMatrixLength; i++) {
-//            char text[200];
-//            sprintf(text, "%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n", adjacenceMatrix[i][0].pheromone, adjacenceMatrix[i][1].pheromone, adjacenceMatrix[i][2].pheromone, adjacenceMatrix[i][3].pheromone, adjacenceMatrix[i][4].pheromone, adjacenceMatrix[i][5].pheromone, adjacenceMatrix[i][6].pheromone, adjacenceMatrix[i][7].pheromone, adjacenceMatrix[i][8].pheromone, adjacenceMatrix[i][9].pheromone);
-//            fwrite(&text, sizeof(char), strlen(text), file);
-//        }
-//        char newLine[1] = {"\n"};
-//        fwrite(&newLine, sizeof(char), 1, file);
         resetAnts(ants, numAnts, adjacenceMatrixLength);
     }
 //    fclose(file);
