@@ -153,7 +153,7 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
     srand((unsigned) time(&t));
     graphEntry **adjacenceMatrix = NULL;
     int adjacenceMatrixLength = 0;
-    adjacenceMatrixLength = buildGraph("../a280.tsp", &adjacenceMatrix);
+    adjacenceMatrixLength = buildGraph(filePath, &adjacenceMatrix);
     if (numAnts == 0) numAnts = adjacenceMatrixLength;
     ant* ants = initAnts(numAnts, adjacenceMatrixLength);
 

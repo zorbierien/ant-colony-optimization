@@ -10,7 +10,7 @@ int main() {
     gettimeofday(&beforeTime, NULL);
     unsigned long long beforeTimestamp = (unsigned long long)beforeTime.tv_sec * 1000000 + beforeTime.tv_usec;
 
-    length = antColonyOptimize("../a280.tsp", &path, 100, 100);
+    length = antColonyOptimize("../k100.tsp", &path, 1000, 100);
 
     struct timeval afterTime;
     gettimeofday(&afterTime, NULL);
