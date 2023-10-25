@@ -1,7 +1,3 @@
-//
-// Created by Steve on 12.09.2023.
-//
-
 #include "aco.h"
 #include "graph.h"
 #include <stdio.h>
@@ -54,8 +50,6 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     double probabilities[adjMatrixLength];
 
     // Calculate sum of Pheromone * Visibilty of all possible ways
-    // OPTIMIZED: Einzelne Heuristik hier schon ion probabilities Array eingefügt, sodass anschließend nur noch eine Division notwendig
-    //VECTORIZED: Use Vectors to calculate probability and overallPathSums
     __m256d pathSum = _mm256_set1_pd(0);
     __m256d probabilityVectors[adjMatrixLength / 4 + 1];
     __m256d alphaVector = _mm256_set1_pd(params.alpha);
@@ -72,7 +66,6 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
         else {
             costArray[0] = adjMatrix[singleAnt.currentNode-1][4*i].cost;
             pheromoneArray[0] = adjMatrix[singleAnt.currentNode-1][4*i].pheromone;
-            //vecArray[0] = amd_pow(adjMatrix[singleAnt.currentNode-1][4*i].pheromone, params.alpha) * amd_pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i].cost, params.beta);
         }
         if (singleAnt.tabuList[4*i+1]) {
             costArray[1] = INT_MAX;
@@ -81,7 +74,6 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
         else {
             costArray[1] = adjMatrix[singleAnt.currentNode-1][4*i+1].cost;
             pheromoneArray[1] = adjMatrix[singleAnt.currentNode-1][4*i+1].pheromone;
-            //vecArray[0] = amd_pow(adjMatrix[singleAnt.currentNode-1][4*i].pheromone, params.alpha) * amd_pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i].cost, params.beta);
         }
         if (singleAnt.tabuList[4*i+2]) {
             costArray[2] = INT_MAX;
@@ -90,7 +82,6 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
         else {
             costArray[2] = adjMatrix[singleAnt.currentNode-1][4*i+2].cost;
             pheromoneArray[2] = adjMatrix[singleAnt.currentNode-1][4*i+2].pheromone;
-            //vecArray[0] = amd_pow(adjMatrix[singleAnt.currentNode-1][4*i].pheromone, params.alpha) * amd_pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i].cost, params.beta);
         }
         if (singleAnt.tabuList[4*i+3]) {
             costArray[3] = INT_MAX;
@@ -99,7 +90,6 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
         else {
             costArray[3] = adjMatrix[singleAnt.currentNode-1][4*i+3].cost;
             pheromoneArray[3] = adjMatrix[singleAnt.currentNode-1][4*i+3].pheromone;
-            //vecArray[0] = amd_pow(adjMatrix[singleAnt.currentNode-1][4*i].pheromone, params.alpha) * amd_pow(1.0 / adjMatrix[singleAnt.currentNode-1][4*i].cost, params.beta);
         }
         costVector = _mm256_loadu_pd((double*)&costArray);
         __m256d visibiltyVector = _mm256_div_pd(_mm256_set1_pd(1), costVector);
@@ -127,7 +117,6 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     if (overallPathSum == 0) return singleAnt.path[0];
 
     // Calculate probabilities for each path
-    //OPTIMIZED: probability wird hier nur noch durch overallPathSum geteilt, statt vollkommen neu berechnet
     pathSum = _mm256_set1_pd(overallPathSum);
     for (int i = 0; i < adjMatrixLength / 4; i++) {
         _mm256_storeu_pd((double*)&probabilities[4*i], _mm256_div_pd(probabilityVectors[i], pathSum));
@@ -141,6 +130,7 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     double randomNumber = (double)rand() / (double)RAND_MAX;
     double sum = 0;
     int index = -1;
+    // Sum up probabilities to random number to choose path
     do {
         sum += probabilities[index+1];
         index++;
@@ -172,13 +162,10 @@ int findShortestPath(ant *ants, int antCount, int **path) {
     return min;
 }
 
-// For Symmetric TSP-Problem
 void updatePheromoneLevel(graphEntry **adjacenceMatrix, const int adjacenceMatrixLength, const int *path, int pathArrayLength, long pathLength) {
-    // Sollte bekannt sein
     double pheromoneMin = 1.0f / (params.ro * (float)params.minimumTourLength * (float)pathArrayLength * (float)pathArrayLength);
     double pheromoneMax = 1.0f / (params.ro * (float)params.minimumTourLength);
 
-    //OPTIMIZED: Innere Schleife nur von i+1 bis j um Symmetrie der Matrix zu nutzen
     for (int i = 0; i < adjacenceMatrixLength; ++i) {
         adjacenceMatrix[i][i].pheromone = (1.0-params.ro) * adjacenceMatrix[i][i].pheromone;
         for (int j = i + 1; j < adjacenceMatrixLength; ++j) {
@@ -213,7 +200,7 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
     srand((unsigned) time(&t));
     graphEntry **adjacenceMatrix = NULL;
     int adjacenceMatrixLength = 0;
-    adjacenceMatrixLength = buildGraph("../a280.tsp", &adjacenceMatrix);
+    adjacenceMatrixLength = buildGraph(filePath, &adjacenceMatrix);
     if (numAnts == 0) numAnts = adjacenceMatrixLength;
     ant* ants = initAnts(numAnts, adjacenceMatrixLength);
 

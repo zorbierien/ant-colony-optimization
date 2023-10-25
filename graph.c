@@ -1,7 +1,3 @@
-//
-// Created by schne on 21.09.2023.
-//
-
 #include "graph.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +7,6 @@
 char** readGraphFile(char *filePath, int *bufferSize) {
     FILE *file = fopen(filePath, "r");
 
-    // Allocate Array with 10000 potential entries of nodes
     int bufferLength = 8;
     int strlen = 20;
     char **lineBuffer = (char**) malloc(bufferLength * sizeof(char*));
@@ -25,7 +20,6 @@ char** readGraphFile(char *filePath, int *bufferSize) {
 
         int index = 0;
         while (!feof(file)) {
-            // OPTIMIZED Allocate more buffer if needed
             if (bufferLength < index + 1) {
                 lineBuffer = (char**)realloc(lineBuffer, bufferLength * 2 * sizeof (char*));
                 if (lineBuffer == NULL) exit(1);
@@ -55,7 +49,7 @@ char** readGraphFile(char *filePath, int *bufferSize) {
 }
 
 graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength) {
-    //Init AdjacenceMatrix & read Node Data in One Loop because of performance reasons
+    //Init AdjacenceMatrix and read node data in one loop
     printf("%s\n", "Build Adjacence Matrix");
 
     graphEntry **adjMatrix = (graphEntry**)malloc(arrayLength * sizeof(graphEntry*));
@@ -65,8 +59,7 @@ graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength) {
         adjMatrix[i] = (graphEntry*)malloc(arrayLength * sizeof(graphEntry));
     }
 
-    // Calculate Euclidian Distance between all nodes and Init Pheromones
-    // OPTIMIZED: Use the Symmetry of the matrix
+    // Calculate euclidian distance between all nodes and init pheromones
     for (int i = 0; i < arrayLength; i++) {
         graphEntry doubleEntry;
         doubleEntry.cost = 0;

@@ -6,12 +6,14 @@ int main() {
     int *path = NULL;
     int length = 0;
 
+    // Start time of measurement
     struct timeval beforeTime;
     gettimeofday(&beforeTime, NULL);
     unsigned long long beforeTimestamp = (unsigned long long)beforeTime.tv_sec * 1000000 + beforeTime.tv_usec;
 
-    length = antColonyOptimize("../a280.tsp", &path, 100, 100);
+    length = antColonyOptimize("../k100.tsp", &path, 100, 100);
 
+    // End time of measurement
     struct timeval afterTime;
     gettimeofday(&afterTime, NULL);
     unsigned long long afterTimestamp = (unsigned long long)afterTime.tv_sec * 1000000 + afterTime.tv_usec;
