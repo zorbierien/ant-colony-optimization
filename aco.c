@@ -1,7 +1,3 @@
-//
-// Created by Steve on 12.09.2023.
-//
-
 #include "aco.h"
 #include "graph.h"
 #include <stdio.h>
@@ -14,6 +10,7 @@ struct mmasParams {
     float ro;
     float alpha;
     float beta;
+    // Should be known or a good approximation
     int minimumTourLength;
 };
 
@@ -50,7 +47,6 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     prob probabilities[adjMatrixLength];
 
     // Calculate sum of Pheromone * Visibilty of all possible ways
-    // OPTIMIZED: Einzelne Heuristik hier schon ion probabilities Array eingefügt, sodass anschließend nur noch eine Division notwendig
     double singleHeuristic;
     for (int i = 0; i < adjMatrixLength; i++) {
         if (singleAnt.tabuList[i]) continue;
@@ -65,7 +61,6 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     if (overallPathSum == 0) return singleAnt.path[0];
 
     // Calculate probabilities for each path
-    //OPTIMIZED: probability wird hier nur noch durch overallPathSum geteilt, statt vollkommen neu berechnet
     for (int i = 0; i < adjMatrixLength; i++) {
         if (singleAnt.tabuList[i]) {
             probabilities[i].probability = 0;
@@ -81,6 +76,7 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     double randomNumber = (double)rand() / (double)RAND_MAX;
     double sum = 0;
     int index = -1;
+    // Sum up probabilities to random number to choose path
     do {
         sum += probabilities[index+1].probability;
         index++;
@@ -112,13 +108,10 @@ int findShortestPath(ant *ants, int antCount, int **path) {
     return min;
 }
 
-// For Symmetric TSP-Problem
 void updatePheromoneLevel(graphEntry **adjacenceMatrix, const int adjacenceMatrixLength, const int *path, int pathArrayLength, long pathLength) {
-    // Sollte bekannt sein
     double pheromoneMin = 1.0f / (params.ro * (float)params.minimumTourLength * (float)pathArrayLength * (float)pathArrayLength);
     double pheromoneMax = 1.0f / (params.ro * (float)params.minimumTourLength);
 
-    //OPTIMIZED: Innere Schleife nur von i+1 bis j um Symmetrie der Matrix zu nutzen
     for (int i = 0; i < adjacenceMatrixLength; ++i) {
         adjacenceMatrix[i][i].pheromone = (1.0-params.ro) * adjacenceMatrix[i][i].pheromone;
         for (int j = i + 1; j < adjacenceMatrixLength; ++j) {
