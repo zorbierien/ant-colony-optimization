@@ -1,7 +1,3 @@
-//
-// Created by Steve on 12.09.2023.
-//
-
 #include "aco.h"
 #include "graph.h"
 #include <stdio.h>

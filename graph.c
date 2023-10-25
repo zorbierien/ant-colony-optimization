@@ -1,7 +1,3 @@
-//
-// Created by schne on 21.09.2023.
-//
-
 #include "graph.h"
 #include <stdio.h>
 #include <stdlib.h>
