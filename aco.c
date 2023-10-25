@@ -1,7 +1,3 @@
-//
-// Created by Steve on 12.09.2023.
-//
-
 #include "aco.h"
 #include "graph.h"
 #include <stdio.h>
@@ -64,8 +60,6 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     double probabilities[adjMatrixLength];
 
     // Calculate sum of Pheromone * Visibilty of all possible ways
-    // OPTIMIZED: Einzelne Heuristik hier schon ion probabilities Array eingefügt, sodass anschließend nur noch eine Division notwendig
-    //OPTIMIZED use fastPow function isntead of pow function
     __m256d pathSum = _mm256_set1_pd(0);
     __m256d probabilityVectors[adjMatrixLength / 4];
     double vecArray[4];
@@ -112,7 +106,6 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     if (overallPathSum == 0) return singleAnt.path[0];
 
     // Calculate probabilities for each path
-    //OPTIMIZED: probability wird hier nur noch durch overallPathSum geteilt, statt vollkommen neu berechnet
     pathSum = _mm256_set1_pd(overallPathSum);
     for (int i = 0; i < adjMatrixLength / 4; i++) {
         __m256d normProbability = _mm256_div_pd(probabilityVectors[i], pathSum);
@@ -127,6 +120,7 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     double randomNumber = (double)rand() / (double)RAND_MAX;
     double sum = 0;
     int index = -1;
+    // Sum up probabilities to random number to choose path
     do {
         sum += probabilities[index+1];
         index++;
@@ -158,7 +152,6 @@ int findShortestPath(ant *ants, int antCount, int **path) {
     return min;
 }
 
-// For Symmetric TSP-Problem
 void updatePheromoneLevel(graphEntry **adjacenceMatrix, const int adjacenceMatrixLength, int *path, int pathArrayLength, long pathLength) {
     double pheromoneMin = 1.0f / (params.ro * (float)params.minimumTourLength * (float)pathArrayLength * (float)pathArrayLength);
     double pheromoneMax = 1.0f / (params.ro * (float)params.minimumTourLength);
@@ -240,7 +233,6 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
     if (numAnts == 0) numAnts = adjacenceMatrixLength;
     ant* ants = initAnts(numAnts, adjacenceMatrixLength);
 
-//    FILE *file = fopen("../test.txt", "a");
     int pathLength = INT_MAX;
     for (int it = 0; it < cycles; it++) {
         placeAnts(ants, numAnts, adjacenceMatrixLength);
@@ -259,7 +251,7 @@ int antColonyOptimize(char *filePath, int **path, int cycles, int numAnts) {
         updatePheromoneLevel(adjacenceMatrix, adjacenceMatrixLength, singlePathTraverse, adjacenceMatrixLength+1, singlePathLength);
         resetAnts(ants, numAnts, adjacenceMatrixLength);
     }
-//    fclose(file);
+
     for (int i = 0; i < adjacenceMatrixLength; i++) {
         free(adjacenceMatrix[i]);
     }
