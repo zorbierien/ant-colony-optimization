@@ -9,6 +9,7 @@
 #include <math.h>
 
 char** readGraphFile(char *filePath, int *bufferSize) {
+    printf("%s %s\n", "Try to open file ", filePath);
     FILE *file = fopen(filePath, "r");
 
     // Allocate Array with 10000 potential entries of nodes
@@ -19,7 +20,6 @@ char** readGraphFile(char *filePath, int *bufferSize) {
     }
 
     if (file) {
-        printf("%s %s\n", "Try to open file ", filePath);
         printf("%s", "Datei erfolgreich geöffnet\n");
 
         int index = 0;
@@ -45,7 +45,7 @@ char** readGraphFile(char *filePath, int *bufferSize) {
 }
 
 graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength) {
-    //Init AdjacenceMatrix & read Node Data in One Loop because of performance reasons
+    //Init AdjacenceMatrix and read node data in one loop
     printf("%s\n", "Build Adjacence Matrix");
 
     graphEntry **adjMatrix = (graphEntry**)malloc(arrayLength * sizeof(graphEntry*));
@@ -55,14 +55,13 @@ graphEntry** buildAdjacenceMatrix(char **nodeArray, int arrayLength) {
         adjMatrix[i] = (graphEntry*)malloc(arrayLength * sizeof(graphEntry));
     }
 
-    // Calculate Euclidian Distance between all nodes and Init Pheromones
+    // Calculate euclidian distance between all nodes and init pheromones
     for (int i = 0; i < arrayLength; i++) {
         for (int j = 0; j < arrayLength; j++) {
             graphEntry entry;
             float xd = nodes[i].x - nodes[j].x;
             float yd = nodes[i].y - nodes[j].y;
             entry.cost = (int)nearbyint(sqrt((double)powf(xd, 2) + (double)powf(yd, 2)));
-            //TODO Check Pheromone Value -> Laut Buch "a small positive number"
             entry.pheromone = 0.1;
             adjMatrix[i][j] = entry;
         }
@@ -76,7 +75,7 @@ int buildGraph(char *filePath, graphEntry ***adjacenceMatrix) {
     char **lines = readGraphFile(filePath, &bufferLength);
     graphEntry **adjMatrix = buildAdjacenceMatrix(lines, bufferLength);
 
-    //Free Memory of Read Lines
+    //Free Memory of read Lines
     for (int i = 0; i < bufferLength; i++) {
         free(lines[i]);
     }
@@ -84,13 +83,4 @@ int buildGraph(char *filePath, graphEntry ***adjacenceMatrix) {
 
     *adjacenceMatrix = adjMatrix;
     return bufferLength;
-
-// Print Adjacence Matrix
-//    for (int i = 0; i < bufferLength; i++) {
-//        printf("%i: ", i+1);
-//        for (int j = 0; j < bufferLength; j++) {
-//            printf("%f\t", adjMatrix[i][j].cost);
-//        }
-//        printf("\n");
-//    }
 }

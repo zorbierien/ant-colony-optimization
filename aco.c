@@ -43,7 +43,7 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     double overallPathSum = 0;
     double probabilities[adjMatrixLength];
 
-    // Calculate sum of Pheromone * Visibilty of all possible ways
+    // Calculate sum of pheromone * visibilty of all possible ways
     for (int i = 0; i < adjMatrixLength; i++) {
         if (singleAnt.tabuList[i]) continue;
         else {
@@ -51,7 +51,7 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
         }
     }
 
-    // Happens if Ant is at the last node
+    // Happens if ant is at the last node
     if (overallPathSum == 0) return singleAnt.path[0];
 
     // Calculate probabilities for each path
@@ -66,6 +66,7 @@ int choosePath(ant singleAnt, graphEntry **adjMatrix, int adjMatrixLength) {
     double randomNumber = (double)rand() / (double)RAND_MAX;
     double sum = 0;
     int index = 0;
+    // Sum up probabilities to random number and choose the path
     do {
         sum += probabilities[index];
         index++;
